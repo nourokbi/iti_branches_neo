@@ -1,55 +1,54 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./MapView.css";
 
 /**
  * MapView props contract
- * - mode: 'home' | 'wms' | 'wps' | 'wps-styled'
- * - wmsConfig?: { url: string; layers: string; format?: string; transparent?: boolean; version?: string }
- * - wpsData?: GeoJSON.FeatureCollection | null (placeholder; usually fetched)
+ * - mode: 'home' | 'wms' | 'wfs' | 'wtfs-styled'
+ * - wmsConfig?: { url: string; layers: string; format?: string; transparent?: boolean; version?: string; styles?: string; sld?: string }
+ * - wfsConfig?: { apiBase: string; typeName: string }
+ * - onPickCoordinate?: (latlng: {lat:number, lng:number}) => void
  */
-export default function MapView({ mode = "home", wmsConfig, wpsData }) {
+export default function MapView({
+  mode = "home",
+  wmsConfig,
+  wfsConfig,
+  onPickCoordinate,
+}) {
   const mapRef = useRef(null);
-  const overlaysRef = useRef({});
+  const overlayGroupRef = useRef(null);
   const baseLayerRef = useRef(null);
   const lastThemeRef = useRef(null);
+  const clickHandlerRef = useRef(null);
 
-  // initialize map once
-  useEffect(() => {
-    if (mapRef.current) return; // already created
+  // Helpers to choose and apply base layers based on theme
+  const isDarkMode = useCallback(
+    () => document.documentElement.classList.contains("dark"),
+    []
+  );
 
-    const map = L.map("app-map", {
-      center: [30.0444, 31.2357], // Cairo as a neutral default
-      zoom: 12,
-      zoomControl: false, // we'll add custom control position
-    });
-    mapRef.current = map;
-
-    // Zoom controls at bottom-right
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-
-    // Setup base layer depending on theme
-    const createTileLayerForTheme = (isDark) =>
+  const createTileLayerForTheme = useCallback(
+    (isDark) =>
       isDark
         ? L.tileLayer(
             "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
             {
-              maxZoom: 20,
-              attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+              maxZoom: 19,
             }
           )
         : L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 19,
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          });
+          }),
+    []
+  );
 
-    const applyBaseLayer = (isDark) => {
+  const applyBaseLayer = useCallback(
+    (isDark) => {
+      const map = mapRef.current;
+      if (!map) return;
       if (lastThemeRef.current === isDark) return;
       lastThemeRef.current = isDark;
-      // remove previous base
       if (baseLayerRef.current) {
         try {
           map.removeLayer(baseLayerRef.current);
@@ -59,43 +58,77 @@ export default function MapView({ mode = "home", wmsConfig, wpsData }) {
       }
       const base = createTileLayerForTheme(isDark).addTo(map);
       baseLayerRef.current = base;
-    };
+    },
+    [createTileLayerForTheme]
+  );
 
-    // Initial base layer based on body class
-    applyBaseLayer(document.body.classList.contains("dark"));
+  // Initialize map once (idempotent creation)
+  useEffect(() => {
+    if (!mapRef.current) {
+      const map = L.map("app-map", {
+        center: [28.0444, 30.2357], // Cairo as a neutral default
+        zoom: 7,
+        zoomControl: false, // we'll add custom control position
+      });
+      mapRef.current = map;
+      // Zoom controls at bottom-right
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+      // Initialize a single overlay group to hold all dynamic layers
+      const group = L.layerGroup().addTo(map);
+      overlayGroupRef.current = group;
+    }
 
-    // Observe theme changes on body class
-    const observer = new MutationObserver(() => {
-      applyBaseLayer(document.body.classList.contains("dark"));
+    // Apply initial base according to current theme
+    applyBaseLayer(isDarkMode());
+  }, [applyBaseLayer, isDarkMode]);
+
+  // Attach listeners for theme changes and resize
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Observe theme changes on html element
+    const htmlObserver = new MutationObserver(() => {
+      applyBaseLayer(isDarkMode());
+      map.invalidateSize();
     });
-    observer.observe(document.body, {
+    htmlObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
 
-    // Resize safety: ensure map fits container when navbar height changes
     const onResize = () => map.invalidateSize();
     window.addEventListener("resize", onResize);
+
     return () => {
       window.removeEventListener("resize", onResize);
-      observer.disconnect();
+      htmlObserver.disconnect();
     };
-  }, []);
+  }, [applyBaseLayer, isDarkMode]);
 
   // update overlays when mode or configs change
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // clear previous overlays
-    Object.values(overlaysRef.current).forEach((layer) => {
+    // 1) Clear previous overlays from the group
+    if (overlayGroupRef.current) {
       try {
-        map.removeLayer(layer);
+        overlayGroupRef.current.clearLayers();
       } catch {
-        // ignore removal errors
+        /* ignore */
       }
-    });
-    overlaysRef.current = {};
+    }
+
+    // 2) Remove any previous click handler (home mode)
+    if (clickHandlerRef.current) {
+      try {
+        map.off("click", clickHandlerRef.current);
+      } catch {
+        /* ignore */
+      }
+      clickHandlerRef.current = null;
+    }
 
     if (mode === "wms" && wmsConfig?.url && wmsConfig?.layers) {
       const {
@@ -104,59 +137,72 @@ export default function MapView({ mode = "home", wmsConfig, wpsData }) {
         format = "image/png",
         transparent = true,
         version = "1.1.1",
+        styles,
+        sld,
       } = wmsConfig;
-      const wms = L.tileLayer
-        .wms(url, {
-          layers,
-          format,
-          transparent,
-          version,
-        })
-        .addTo(map);
-      overlaysRef.current["wms"] = wms;
-    } else if (mode === "wps" || mode === "wps-styled") {
-      // Draw GeoJSON from WPS (placeholder: use provided wpsData or a demo feature)
-      const data = wpsData ?? {
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            properties: { name: "Demo area" },
-            geometry: {
-              type: "Polygon",
-              coordinates: [
-                [
-                  [31.2, 30.05],
-                  [31.26, 30.05],
-                  [31.26, 30.01],
-                  [31.2, 30.01],
-                  [31.2, 30.05],
-                ],
-              ],
-            },
-          },
-        ],
-      };
-
-      const styleBase = {
-        color: mode === "wps-styled" ? "#ff7ee0" : "#7c6bf2",
-        weight: 2,
-        fillColor: mode === "wps-styled" ? "#ff7ee055" : "#7c6bf255",
-        fillOpacity: 0.5,
-      };
-      const gj = L.geoJSON(data, { style: styleBase }).addTo(map);
-      overlaysRef.current["wps"] = gj;
-
-      try {
-        map.fitBounds(gj.getBounds(), { padding: [20, 20] });
-      } catch {
-        // ignore fitBounds when geometry is invalid/empty
+      const wmsOpts = { layers, format, transparent, version };
+      if (styles) wmsOpts.styles = styles;
+      if (sld) wmsOpts.sld = sld;
+      L.tileLayer.wms(url, wmsOpts).addTo(overlayGroupRef.current);
+    } else if (mode === "wfs" || mode === "wtfs-styled") {
+      // Fetch WFS via backend proxy and add as GeoJSON
+      if (wfsConfig?.apiBase && wfsConfig?.typeName) {
+        const u = new URL(`${wfsConfig.apiBase}/api/wfs/items`);
+        u.searchParams.set("typeName", wfsConfig.typeName);
+        u.searchParams.set("srsName", "EPSG:4326");
+        u.searchParams.set("limit", "500");
+        fetch(u)
+          .then((r) => r.json())
+          .then((data) => {
+            const styled = mode === "wtfs-styled";
+            const getStyle = (feature) => {
+              if (!styled)
+                return {
+                  color: "#7c6bf2",
+                  weight: 2,
+                  fillColor: "#7c6bf255",
+                  fillOpacity: 0.5,
+                };
+              const t = (feature?.properties?.track ?? "")
+                .toString()
+                .toLowerCase();
+              const palette = {
+                north: "#7ef1ff",
+                south: "#ff7ee0",
+                east: "#7c6bf2",
+                west: "#ffc857",
+                default: "#4ade80",
+              };
+              const color = palette[t] || palette.default;
+              return {
+                color,
+                weight: 2,
+                fillColor: `${color}55`,
+                fillOpacity: 0.5,
+              };
+            };
+            const gj = L.geoJSON(data, { style: getStyle }).addTo(
+              overlayGroupRef.current
+            );
+            try {
+              map.fitBounds(gj.getBounds(), { padding: [20, 20] });
+            } catch {
+              /* ignore */
+            }
+          })
+          .catch((err) => console.error("WFS load error", err));
       }
+    } else if (mode === "home") {
+      // Enable click to pick coordinates into the form
+      const clickHandler = (e) => {
+        onPickCoordinate && onPickCoordinate(e.latlng);
+      };
+      map.on("click", clickHandler);
+      clickHandlerRef.current = clickHandler;
     } else {
-      // home mode: no overlays, maybe reset view softly
-      // keep current view to avoid jarring UX; you can reset if needed
+      // other modes: no overlays
     }
-  }, [mode, wmsConfig, wpsData]);
+  }, [mode, wmsConfig, wfsConfig, onPickCoordinate]);
 
   return <div id="app-map" className="app-map" />;
 }

@@ -6,11 +6,19 @@
   height: calc(100vh - 127px); /* full viewport minus navbar */
   text-align: left; /* override global center */
   position: relative; /* sit above background map */
-  z-index: 1;
+  z-index: 10; /* ensure shadow renders above map tiles */
   background: var(--header-bg);
   border-radius: 16px;
   padding: 20px 22px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  /* Stronger, multi-layer shadow for better contrast on light basemaps */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18), 0 6px 12px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Subtle but clear shadow on dark theme */
+body.dark .branch-form-section {
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .form-title {

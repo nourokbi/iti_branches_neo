@@ -4,49 +4,45 @@ import { Earth, Moon, Sun } from "lucide-react";
 
 export default function Navbar({ onNavigate }) {
   const headerRef = useRef(null);
+
   const getInitialTheme = () => {
-    if (typeof window !== "undefined") {
+    try {
       const saved = localStorage.getItem("theme");
       if (saved === "light" || saved === "dark") return saved;
-      const prefersDark =
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches;
-      return prefersDark ? "dark" : "light";
+    } catch {
+      /* ignore storage errors */
     }
-    return "light";
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return prefersDark ? "dark" : "light";
   };
 
   const [theme, setTheme] = useState(getInitialTheme);
 
   function handleThemeChange() {
-    // Use functional update to avoid stale state
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   }
 
   useEffect(() => {
-    document.body.classList.toggle("dark", theme === "dark");
+    const isDark = theme === "dark";
+    document.body.classList.toggle("dark", isDark);
+    document.documentElement.classList.toggle("dark", isDark);
     try {
       localStorage.setItem("theme", theme);
     } catch {
-      // ignore write errors (private mode, etc.)
+      /* ignore storage errors */
     }
   }, [theme]);
 
-  // Publish navbar height as a CSS variable to avoid page scrolling
-  useEffect(() => {
-    function updateNavbarHeightVar() {
-      const el = headerRef.current;
-      if (!el) return;
-      const styles = getComputedStyle(el);
-      const mt = parseFloat(styles.marginTop) || 0;
-      const mb = parseFloat(styles.marginBottom) || 0;
-      const h = el.offsetHeight + mt + mb;
-      document.documentElement.style.setProperty("--navbar-h", `${h}px`);
-    }
-    updateNavbarHeightVar();
-    window.addEventListener("resize", updateNavbarHeightVar);
-    return () => window.removeEventListener("resize", updateNavbarHeightVar);
-  }, []);
+  // Removed navbar height variable publishing as it's not needed for this project
+
+  const navItems = [
+    { key: "home", label: "Home" },
+    { key: "wms", label: "WMS" },
+    { key: "wfs", label: "WFS" },
+    { key: "wtfs-styled", label: "WFS Styled" },
+  ];
 
   const isDark = theme === "dark";
 
@@ -61,51 +57,19 @@ export default function Navbar({ onNavigate }) {
         </a>
         <nav className="navbar">
           <ul className="nav-links">
-            {/* Handle navigation */}
-            <li>
-              <a
-                href="#home"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate && onNavigate("home");
-                }}
-              >
-                Home
-              </a>
-            </li>
-            <li>
-              <a
-                href="#wms"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate && onNavigate("wms");
-                }}
-              >
-                WMS
-              </a>
-            </li>
-            <li>
-              <a
-                href="#wps"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate && onNavigate("wps");
-                }}
-              >
-                WPS
-              </a>
-            </li>
-            <li>
-              <a
-                href="#wps-styled"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate && onNavigate("wps-styled");
-                }}
-              >
-                WPS Styled
-              </a>
-            </li>
+            {navItems.map((item) => (
+              <li key={item.key}>
+                <a
+                  href={`#${item.key}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate && onNavigate(item.key);
+                  }}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
         <div className="theme-changer">

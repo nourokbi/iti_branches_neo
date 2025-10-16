@@ -1,9 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, Route, MapPin, Crosshair, Loader2 } from "lucide-react";
 import "./BranchesForm.css";
 
-export default function BranchesForm() {
+export default function BranchesForm({ selectedCoords }) {
   const [form, setForm] = useState({ name: "", track: "", x: "", y: "" });
+  useEffect(() => {
+    if (
+      selectedCoords &&
+      typeof selectedCoords.lat === "number" &&
+      typeof selectedCoords.lng === "number"
+    ) {
+      setForm((prev) => ({
+        ...prev,
+        x: selectedCoords.lng.toFixed(6),
+        y: selectedCoords.lat.toFixed(6),
+      }));
+    }
+  }, [selectedCoords]);
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {

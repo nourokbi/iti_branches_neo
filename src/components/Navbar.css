@@ -5,8 +5,16 @@ header {
   margin-top: 20px;
   height: 60px;
   align-content: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  /* Stronger multi-layer shadow for visibility on light basemaps */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18), 0 6px 12px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
   z-index: 400;
+}
+
+/* Dark theme: slightly subtler shadow that still separates from dark tiles */
+body.dark header {
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 header .container {
   display: flex;
@@ -99,6 +107,29 @@ header .container .navbar .nav-links li a:hover::after,
 header .container .navbar .nav-links li a:focus-visible::after {
   transform: scaleX(1);
   transform-origin: left;
+}
+
+/* Logo hover only */
+.brand {
+  transition: transform 0.2s ease;
+}
+.brand-badge {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.brand-wordmark {
+  transition: opacity 0.2s ease, letter-spacing 0.2s ease;
+}
+.brand:hover {
+  transform: translateY(-1px);
+}
+.brand:hover .brand-badge {
+  transform: scale(1.08) rotate(-5deg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+.brand:hover .brand-wordmark {
+  letter-spacing: 0.6px;
+  opacity: 0.95;
 }
 /* Accessible focus ring */
 header .container .navbar .nav-links li a:focus-visible {
