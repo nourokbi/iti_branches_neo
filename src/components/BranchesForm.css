@@ -1,0 +1,122 @@
+/* Form container */
+.branch-form-section {
+  margin: 20px 0; /* align to top without extra vertical space */
+  max-width: 440px;
+  width: min(480px, 100%);
+  height: calc(100vh - 127px); /* full viewport minus navbar */
+  text-align: left; /* override global center */
+  position: relative; /* sit above background map */
+  z-index: 1;
+  background: var(--header-bg);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.form-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  color: var(--text);
+}
+
+.branch-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+}
+
+.field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px 8px 38px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.input-wrap .icon {
+  position: absolute;
+  left: 10px;
+  display: inline-flex;
+  color: var(--link);
+}
+.input-wrap input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+}
+.input-wrap:focus-within {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--border) 25%, transparent);
+  border-color: var(--link);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px; /* push to bottom */
+}
+
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--link), var(--border));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 20px color-mix(in oklab, var(--border) 25%, transparent);
+}
+.submit-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 10px 26px color-mix(in oklab, var(--border) 35%, transparent);
+}
+.submit-btn:active {
+  transform: translateY(0);
+}
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

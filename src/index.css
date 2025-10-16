@@ -1,0 +1,52 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+
+  /* Theme variables (light defaults) */
+  --bg: #ffffff;
+  --text: #111827;
+  --header-bg: #f3e9dc;
+  --link: #c75d2c;
+  --link-hover: #63341e;
+  --border: #c75d2c;
+  --switch-track-start: #f3e9dc;
+  --switch-track-end: #ffe3d1;
+  --switch-thumb-bg: #ffffff;
+  --switch-thumb-color: #c75d2c;
+  --switch-thumb-checked-bg: #c75d2c;
+  --switch-thumb-checked-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode overrides via class on body */
+body.dark {
+  --bg: #121212;
+  --text: #f3f4f6;
+  --header-bg: #1f1f1f;
+  --link: #ffd2bb;
+  --link-hover: #ffc19c;
+  --border: #c75d2c;
+  --switch-track-start: #2a2a2a;
+  --switch-track-end: #3a3a3a;
+  --switch-thumb-bg: #1f1f1f;
+  --switch-thumb-color: #ffd2bb;
+  --switch-thumb-checked-bg: #c75d2c;
+  --switch-thumb-checked-color: #ffffff;
+}
+
+body {
+  color: var(--text);
+  background-color: var(--bg);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}

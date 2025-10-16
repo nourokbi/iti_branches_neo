@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: gis
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  geoserver:
+    image: kartoza/geoserver:2.23.2
+    environment:
+      - GEOSERVER_DATA_DIR=/opt/geoserver_data/data
+      - GEOSERVER_ADMIN_PASSWORD=geoserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgis
+    volumes:
+      - geoserver_data:/opt/geoserver_data/data
+
+  api:
+    build: ./backend
+    env_file:
+      - ./backend/.env.example
+    environment:
+      - GEOSERVER_URL=http://geoserver:8080/geoserver
+      - ALLOWED_ORIGINS=http://localhost:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      - geoserver
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  geoserver_data:
