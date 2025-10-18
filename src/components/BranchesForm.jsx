@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { User, Route, MapPin, Crosshair, Loader2 } from "lucide-react";
 import "./BranchesForm.css";
 
-export default function BranchesForm({ selectedCoords }) {
+export default function BranchesForm({ selectedCoords, onCreated }) {
   const [form, setForm] = useState({ name: "", track: "", x: "", y: "" });
   useEffect(() => {
     if (
@@ -26,12 +26,31 @@ export default function BranchesForm({ selectedCoords }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    // Placeholder submit behavior; integrate with backend later
+    const name = (form.name || "").trim();
+    const track = (form.track || "").trim();
+    const X = parseFloat(form.x);
+    const Y = parseFloat(form.y);
+    if (!name || !track || Number.isNaN(X) || Number.isNaN(Y)) {
+      alert("Please fill all fields with valid values.");
+      return;
+    }
     setLoading(true);
     try {
-      // TODO: replace with API call
-      await new Promise((r) => setTimeout(r, 900));
-      console.log("Branch submitted:", form);
+      const resp = await fetch("http://localhost:2711/branches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ Branch: name, X, Y, Tracks: track }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data?.message || "Failed to create branch");
+      // Notify parent to reload map
+      onCreated && onCreated(data);
+      // Clear only the name; keep coords & track for convenience
+      setForm((prev) => ({ ...prev, name: "" }));
+      alert(`Branch created: ${name}`);
+    } catch (err) {
+      console.error("Create branch failed", err);
+      alert(err.message || "Error creating branch");
     } finally {
       setLoading(false);
     }
@@ -107,7 +126,7 @@ export default function BranchesForm({ selectedCoords }) {
             <label htmlFor="y">Y Coordinate</label>
             <div className="input-wrap">
               <span className="icon" aria-hidden>
-                <Crosshair size={18} />
+                <MapPin size={18} />
               </span>
               <input
                 id="y"

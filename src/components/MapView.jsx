@@ -15,12 +15,14 @@ export default function MapView({
   wmsConfig,
   wfsConfig,
   onPickCoordinate,
+  reloadKey,
 }) {
   const mapRef = useRef(null);
   const overlayGroupRef = useRef(null);
   const baseLayerRef = useRef(null);
   const lastThemeRef = useRef(null);
   const clickHandlerRef = useRef(null);
+  const branchesLayerRef = useRef(null);
 
   // Helpers to choose and apply base layers based on theme
   const isDarkMode = useCallback(
@@ -193,7 +195,52 @@ export default function MapView({
           .catch((err) => console.error("WFS load error", err));
       }
     } else if (mode === "home") {
-      // Enable click to pick coordinates into the form
+      // 1) Load branches from Node backend (/branches) and add to map
+      const load = async () => {
+        try {
+          let resp = await fetch("http://localhost:2711/branches");
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const json = await resp.json();
+          const rows = Array.isArray(json?.data) ? json.data : [];
+          const features = rows.map((r) => ({
+            type: "Feature",
+            geometry: r.geom || null,
+            properties: {
+              id: r.id,
+              Branch: r.Branch,
+              Tracks: r.Tracks,
+              X: r.X,
+              Y: r.Y,
+            },
+          }));
+          const fc = { type: "FeatureCollection", features };
+          const layer = L.geoJSON(fc, {
+            pointToLayer: (feature, latlng) =>
+              L.circleMarker(latlng, {
+                radius: 6,
+                color: "#2563eb",
+                weight: 2,
+                fillColor: "#3b82f6",
+                fillOpacity: 0.8,
+              }).bindPopup(
+                `${feature?.properties?.Branch ?? "Branch"} (${(
+                  feature?.properties?.Y ?? "?"
+                ).toString()}, ${(feature?.properties?.X ?? "?").toString()})`
+              ),
+          }).addTo(overlayGroupRef.current);
+          branchesLayerRef.current = layer;
+          try {
+            map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+          } catch {
+            /* ignore fitBounds errors */
+          }
+        } catch (err) {
+          console.error("Branches load error", err);
+        }
+      };
+      load();
+
+      // 2) Enable click to pick coordinates into the form
       const clickHandler = (e) => {
         onPickCoordinate && onPickCoordinate(e.latlng);
       };
@@ -202,7 +249,7 @@ export default function MapView({
     } else {
       // other modes: no overlays
     }
-  }, [mode, wmsConfig, wfsConfig, onPickCoordinate]);
+  }, [mode, wmsConfig, wfsConfig, onPickCoordinate, reloadKey]);
 
   return <div id="app-map" className="app-map" />;
 }

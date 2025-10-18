@@ -1,24 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "./Navbar.css";
 import { Earth, Moon, Sun } from "lucide-react";
 
 export default function Navbar({ onNavigate }) {
-  const headerRef = useRef(null);
-
-  const getInitialTheme = () => {
+  // Theme: read from localStorage else default to dark
+  const [theme, setTheme] = useState(() => {
     try {
       const saved = localStorage.getItem("theme");
       if (saved === "light" || saved === "dark") return saved;
     } catch {
       /* ignore storage errors */
     }
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
-  };
-
-  const [theme, setTheme] = useState(getInitialTheme);
+    return "dark";
+  });
 
   function handleThemeChange() {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -35,8 +29,6 @@ export default function Navbar({ onNavigate }) {
     }
   }, [theme]);
 
-  // Removed navbar height variable publishing as it's not needed for this project
-
   const navItems = [
     { key: "home", label: "Home" },
     { key: "wms", label: "WMS" },
@@ -47,7 +39,7 @@ export default function Navbar({ onNavigate }) {
   const isDark = theme === "dark";
 
   return (
-    <header ref={headerRef}>
+    <header>
       <div className="container">
         <a className="brand" href="#home" aria-label="GeoScope home">
           <span className="brand-badge" aria-hidden="true">

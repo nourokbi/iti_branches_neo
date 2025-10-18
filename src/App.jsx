@@ -7,6 +7,7 @@ import { useState } from "react";
 function App() {
   const [mode, setMode] = useState("home"); // 'home' | 'wms' | 'wfs' | 'wtfs-styled'
   const [selectedCoords, setSelectedCoords] = useState(null); // { lat, lng }
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Simple configs (adjust to your GeoServer setup)
   const WFS_LAYER = "iti:iTi Branches"; // layer name from GeoServer
@@ -31,9 +32,13 @@ function App() {
         onPickCoordinate={(latlng) => setSelectedCoords(latlng)}
         wmsConfig={WMS_CONFIG}
         wfsConfig={{ apiBase: API_BASE, typeName: WFS_LAYER }}
+        reloadKey={reloadKey}
       />
       {mode === "home" ? (
-        <BranchesForm selectedCoords={selectedCoords} />
+        <BranchesForm
+          selectedCoords={selectedCoords}
+          onCreated={() => setReloadKey((k) => k + 1)}
+        />
       ) : null}
     </>
   );
