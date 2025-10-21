@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { User, Route, MapPin, Crosshair, Loader2 } from "lucide-react";
 import "./BranchesForm.css";
+import Toast from "./Toast";
 
 export default function BranchesForm({ selectedCoords, onCreated }) {
   const [form, setForm] = useState({ name: "", track: "", x: "", y: "" });
+  const [toast, setToast] = useState(null);
   useEffect(() => {
     if (
       selectedCoords &&
@@ -31,7 +33,10 @@ export default function BranchesForm({ selectedCoords, onCreated }) {
     const X = parseFloat(form.x);
     const Y = parseFloat(form.y);
     if (!name || !track || Number.isNaN(X) || Number.isNaN(Y)) {
-      alert("Please fill all fields with valid values.");
+      setToast({
+        message: "Please fill all fields with valid values.",
+        type: "error",
+      });
       return;
     }
     setLoading(true);
@@ -47,10 +52,16 @@ export default function BranchesForm({ selectedCoords, onCreated }) {
       onCreated && onCreated(data);
       // Clear only the name; keep coords & track for convenience
       setForm((prev) => ({ ...prev, name: "" }));
-      alert(`Branch created: ${name}`);
+      setToast({
+        message: `Branch "${name}" created successfully! 🎉`,
+        type: "success",
+      });
     } catch (err) {
       console.error("Create branch failed", err);
-      alert(err.message || "Error creating branch");
+      setToast({
+        message: err.message || "Error creating branch. Please try again.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -93,7 +104,7 @@ export default function BranchesForm({ selectedCoords, onCreated }) {
               id="track"
               name="track"
               type="text"
-              placeholder="e.g., North Line"
+              placeholder="e.g., GIS, AI"
               required
               value={form.track}
               onChange={handleChange}
@@ -155,6 +166,14 @@ export default function BranchesForm({ selectedCoords, onCreated }) {
           </button>
         </div>
       </form>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+          duration={4000}
+        />
+      )}
     </section>
   );
 }

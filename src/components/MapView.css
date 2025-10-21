@@ -1,11 +1,90 @@
 .app-map {
-  position: fixed;
-  inset: 0;
-  z-index: 0; /* stays behind panels */
+  position: fixed; /* Stay fixed behind other content */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width of viewport */
+  height: 100vh; /* Full height of viewport */
+  z-index: 1; /* Behind navbar and forms */
 }
 
-/* Ensure Leaflet container covers the viewport */
-#app-map.leaflet-container {
-  width: 100vw;
-  height: 100vh;
+.app-map .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Move zoom controls to bottom right */
+.app-map .leaflet-top.leaflet-left {
+  top: auto !important;
+  left: auto !important;
+  bottom: 20px !important;
+  right: 20px !important;
+}
+
+.app-map .leaflet-control-zoom {
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom icon markers */
+.custom-branch-icon,
+.custom-wfs-icon,
+.custom-wfs-styled-icon {
+  background: transparent !important;
+  border: none !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.custom-branch-icon:hover,
+.custom-wfs-icon:hover,
+.custom-wfs-styled-icon:hover {
+  transform: translateY(-5px) scale(1.1);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+}
+
+.custom-branch-icon svg,
+.custom-wfs-icon svg,
+.custom-wfs-styled-icon svg {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+  transition: filter 0.3s ease;
+}
+
+.custom-branch-icon:hover svg,
+.custom-wfs-icon:hover svg,
+.custom-wfs-styled-icon:hover svg {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
+/* Different pulse animations for different modes */
+@keyframes pulse-purple {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulse-blue {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-status {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
 }

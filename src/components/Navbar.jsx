@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./Navbar.css";
 import { Earth, Moon, Sun } from "lucide-react";
 
-export default function Navbar({ onNavigate }) {
+export default function Navbar({ onNavigate, onThemeChange }) {
   // Theme: read from localStorage else default to dark
   const [theme, setTheme] = useState(() => {
     try {
@@ -15,7 +15,12 @@ export default function Navbar({ onNavigate }) {
   });
 
   function handleThemeChange() {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    // Notify parent component about theme change
+    if (onThemeChange) {
+      onThemeChange(newTheme);
+    }
   }
 
   useEffect(() => {
@@ -45,7 +50,7 @@ export default function Navbar({ onNavigate }) {
           <span className="brand-badge" aria-hidden="true">
             <Earth size={18} />
           </span>
-          <span className="brand-wordmark">GeoScope</span>
+          <span className="brand-wordmark">Branch Manager</span>
         </a>
         <nav className="navbar">
           <ul className="nav-links">
