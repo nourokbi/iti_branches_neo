@@ -100,15 +100,21 @@ export default function BranchesForm({ selectedCoords, onCreated }) {
             <span className="icon" aria-hidden>
               <Route size={18} />
             </span>
-            <input
+            <select
               id="track"
               name="track"
-              type="text"
-              placeholder="e.g., GIS, AI"
               required
               value={form.track}
               onChange={handleChange}
-            />
+            >
+              <option value="" disabled>
+                Select a track
+              </option>
+              <option value="GIS">GIS</option>
+              <option value="AI">AI</option>
+              <option value="MERN">MERN</option>
+              <option value="SysAdmin">SysAdmin</option>
+            </select>
           </div>
         </div>
 
